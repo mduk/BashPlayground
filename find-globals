@@ -1,0 +1,9 @@
+#!/bin/bash
+
+sed -nr "
+#  /^$1()/,/^}/{      # Search only within the function named by $1
+    /\\$[A-Z_]{1,}/p # Print read-references to global variables
+    /[A-Z]{1,}+=/p   # Print write-references to global variables
+    /declare -g.*/p  # Print any occurrences of declare -g
+#  }
+"
