@@ -1,10 +1,28 @@
+exec 5>/tmp/execution.log
+BASH_XTRACEFD=5
+
+set -x
+
+stderr() {
+  echo "$@" >&2
+}
+
 myfunction() {
+  declare param_foo=""
+  declare param_foo_rules="-n -f"
+
+  declare param_enum=""
+  declare param_enum_rules="//(foo|bar)"
+
+
   while [[ $# -gt 0 ]]
   do
     case "$1" in
       *:)
+        declare    param_name="${1%:}"
         declare -a "param_${1%:}=()"
         declare -n param_var="param_${1%:}"
+        declare -n param_rules="param_${1%:}_rules"
         ;;
 
       *:*)
@@ -36,7 +54,47 @@ myfunction() {
         ;;
 
       *)
-        param_var+=("$1")
+        declare pass=true
+        if [[ -n $param_rules ]]
+        then
+          for rule in $param_rules
+          do
+            case "$rule" in
+              -?)
+                if ! eval [[ "$rule" "$1" ]]
+                then pass=false
+                fi
+                ;;
+
+              //*)
+                declare values="${1#/}"
+                if ! grep -q -E ${grep_extended} "$1" <<<"${1#/}"
+                then pass=false
+                fi
+                ;;
+
+              /*)
+                declare values="${1#/}"
+                if ! grep -q ${grep_extended} "$1" <<<"${1#/}"
+                then pass=false
+                fi
+                ;;
+            esac
+          done
+
+          if $pass
+          then param_var+=("$1")
+          else
+            stderr "VALIDATION FAILURE"
+            stderr "  Parameter: [$param_name]"
+            stderr "      Rules: [$param_rules]"
+            stderr "      Value: [$1]"
+            return
+          fi
+
+        else
+          param_var+=("$1")
+        fi
         ;;
 
     esac
@@ -48,6 +106,12 @@ myfunction() {
   do echo " $i ${param_foo[$i]}"
   done
   echo " @ ${param_foo[@]}"
+
+  echo "enum:"
+  for i in $(seq 0 $((${#param_enum[@]}-1)))
+  do echo " $i ${param_enum[$i]}"
+  done
+  echo " @ ${param_enum[@]}"
 
   echo "bar:"
   for i in $(seq 0 $((${#param_bar[@]}-1)))
@@ -78,12 +142,14 @@ myfunction() {
   do echo " $i ${param_indirected[$i]}"
   done
   echo " @ ${param_indirected[@]}"
+
 }
 
 declare -a some_other_var=(foo bar baz)
 
 myfunction \
-  foo: bar \
+  foo: /etc/hosts \
+  enum: foo \
   bar: one two three \
   baz: "foo bar" \
   qha: [ one two: three four: five ] \
