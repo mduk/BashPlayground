@@ -352,7 +352,7 @@ HTTP() {
   fi
 
   # Execute Request
-  [[ $debug == 'true' ]] && echo "${cmdstring}"
+  [[ $debug == 'true' ]] && var_dump cmdstring
   eval "$cmdstring"
   declare -i exitcode=$?
 
