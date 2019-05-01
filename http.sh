@@ -101,6 +101,7 @@ HTTP() {
 
           file)
             echo "$reqdir/response.http"
+            return
             ;;
 
           status)
