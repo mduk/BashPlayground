@@ -225,7 +225,7 @@ HTTP() {
 
   if [[ -z $param_method ]] && [[ -z $param_url ]]
   then
-    for method in GET PUT POST DELETE
+    for method in GET POST PUT DELETE HEAD OPTIONS
     do
       declare -n param="param_$method"
       if [[ -n $param ]]
