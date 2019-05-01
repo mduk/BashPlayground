@@ -1,6 +1,24 @@
+declare debug=${HTTP_DEBUG:-false}
+
 source ./array-assoc-utils.sh
 
-#declare -Ag HTTP_REQUEST_ALIASES=()
+########################################################################
+# Initialise associative arrays that don't already exist
+########################################################################
+init_global_assoc() {
+  for assoc
+  do
+    if ! declare -p "$assoc" &>/dev/null
+    then declare -Ag "${assoc}=()"
+    fi
+  done
+}
+
+init_global_assoc \
+  HTTP_REQUEST_ALIASES \
+  HTTP_REQUEST_HEADERS \
+  HTTP_REQUEST_QUERY \
+  HTTP_REQUEST_MATLS
 
 declare -Ag PARAM_RULES=(
   [url]='//^https?://.+'
@@ -225,15 +243,25 @@ HTTP() {
     return 1
   fi
 
-  declare -A headers=()
-  [[ -n $param_headers ]] && array_to_assoc param_headers headers
+  # Collate Headers
+  declare -A headers=() assoc_headers=()
+  [[ -n $param_headers ]] && array_to_assoc param_headers assoc_headers
+  assoc_merge headers HTTP_REQUEST_HEADERS assoc_headers
+  [[ $debug == 'true' ]] && var_dump HTTP_REQUEST_HEADERS assoc_headers headers
 
-  declare -A query=()
-  [[ -n $param_query ]] && array_to_assoc param_query query
+  # Collate Query Parameters
+  declare -A query=() assoc_query=()
+  [[ -n $param_query ]] && array_to_assoc param_query assoc_query
+  assoc_merge query HTTP_REQUEST_QUERY assoc_query
+  [[ $debug == 'true' ]] && var_dump HTTP_REQUEST_HEADERS assoc_query query
 
-  declare -A matls=()
+  # Collate MA-TLS Config
+  declare -A matls=() assoc_matls=()
   [[ -n $param_matls ]] && array_to_assoc param_matls matls
+  assoc_merge matls HTTP_REQUEST_MATLS assoc_matls
+  [[ $debug == 'true' ]] && var_dump HTTP_REQUEST_MATLS assoc_matls matls
 
+  # Build Query String
   declare querystring=''
   if [[ ${#param_query[@]} -gt 0 ]]
   then
@@ -243,15 +271,15 @@ HTTP() {
     fi
   fi
 
-  declare authorization=''
+  # Build Authorization Header
   if [[ ${#param_auth[@]} -gt 0 ]]
   then
     if [[ ${#param_auth[@]} -eq 1 ]]
-    then authorization="$param_auth"
+    then headers[Authorization]="$param_auth"
     else
       case "${param_auth[0]}" in
 
-         basic)
+         basic|Basic)
            if [[ ${#param_auth[@]} -lt 3 ]]
            then
              echo 'HTTP: auth: basic: requires two parameters, username and password.' >&2
@@ -261,7 +289,7 @@ HTTP() {
            headers[Authorization]="Basic $(base64 <<<"${param_auth[1]}:${param_auth[2]}")"
            ;;
 
-        bearer)
+        bearer|Bearer)
           if [[ ${#param_auth[@]} -lt 2 ]]
           then
             echo 'HTTP: auth: bearer: requires one parameter, the bearer token.' >&2
@@ -280,6 +308,7 @@ HTTP() {
     fi
   fi
 
+  # Assemble HTTPie Command String
   declare cmdstring="http --verbose --follow "
   cmdstring+="--timeout '$param_timeout' "
   cmdstring+="--verify '$param_verify' "
@@ -322,6 +351,7 @@ HTTP() {
     cmdstring+="<'$bodyfile'"
   fi
 
+  # Execute Request
   eval "$cmdstring"
   declare -i exitcode=$?
 
