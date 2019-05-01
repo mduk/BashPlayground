@@ -1,4 +1,4 @@
-source ./array-to-assoc.sh
+source ./array-assoc-utils.sh
 
 #declare -Ag HTTP_REQUEST_ALIASES=()
 
