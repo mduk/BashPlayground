@@ -52,6 +52,12 @@ assoc_to_array() {
 }
 
 assoc_merge() {
+  if [[ $# -lt 2 ]]
+  then
+    echo 'Usage: assoc_merge merge1_name merge2_name merge3_name ...' >&2
+    return 1
+  fi
+
   declare -n target="$1"
   shift
 
