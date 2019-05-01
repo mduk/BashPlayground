@@ -97,7 +97,7 @@ HTTP() {
             ;;
 
           body)
-            cat "$reqdir/request.body.http"
+            cat "$reqdir/request.sent.body.http"
             return
             ;;
 
