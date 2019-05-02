@@ -21,6 +21,9 @@ init_global_assoc \
   HTTP_REQUEST_QUERY \
   HTTP_REQUEST_MATLS
 
+########################################################################
+# Parameter Validation Rules used by HTTP
+########################################################################
 declare -Ag PARAM_RULES=(
   [url]='//^https?://.+'
   [no-spaces]='//^[^ ]+$'
@@ -28,6 +31,9 @@ declare -Ag PARAM_RULES=(
   [yes-no]='/^(yes|no|YES|NO)$'
 )
 
+########################################################################
+# URL Encoding
+########################################################################
 HTTP_urlencode() {
   while [[ $# -gt 0 ]]
   do
@@ -46,7 +52,9 @@ HTTP_urlencode() {
   done | sed 's/&$//' # strip off trailing ampersand
 }
 
-
+########################################################################
+# HTTP function implementation
+########################################################################
 HTTP() {
   if [[ $1 != *: ]]
   then
