@@ -77,8 +77,11 @@ HTTP() {
 
       request|request*)
         if [[ $1 == request[* ]]
-        then declare reqdir="${HTTP_REQUEST_ALIASES[$(sed -E 's/request\[([a-zA-Z]+)\]/\1/' <<< "$1")]}"
-        else declare reqdir="$HTTP_LAST_REQDIR"
+        then
+          declare alias="$(sed -E 's/request\[([a-zA-Z]+)\]/\1/' <<< "$1")"
+          declare reqdir="${HTTP_REQUEST_ALIASES[$alias]}"
+        else
+          declare reqdir="$HTTP_LAST_REQDIR"
         fi
 
         case "$2" in
