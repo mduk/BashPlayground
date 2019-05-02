@@ -1,5 +1,6 @@
 declare debug=${HTTP_DEBUG:-false}
 
+source ./var-dump.sh
 source ./array-assoc-utils.sh
 
 ########################################################################
