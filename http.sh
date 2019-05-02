@@ -65,8 +65,11 @@ HTTP() {
 
       raw|raw*)
         if [[ $1 == raw[* ]]
-        then declare reqdir="${HTTP_REQUEST_ALIASES[$(sed -E 's/raw\[([a-zA-Z]+)\]/\1/' <<< "$1")]}"
-        else declare reqdir="$HTTP_LAST_REQDIR"
+        then
+          declare alias="$(sed -E 's/raw\[([a-zA-Z]+)\]/\1/' <<< "$1")"
+          declare reqdir="${HTTP_REQUEST_ALIASES[$alias]}"
+        else
+          declare reqdir="$HTTP_LAST_REQDIR"
         fi
         cat "$reqdir/raw.http"
         return
