@@ -359,24 +359,31 @@ HTTP() {
   eval "$cmdstring"
   declare -i exitcode=$?
 
+  # Yes it's sed. Don't be scared. Sed loves you.
+  declare sedextractrequest=':a; p; n; /^HTTP/q; ba;'
+  declare sedextractresponse='/^HTTP/{ p; :a; n; p; ba; }'
+  declare sedextractheaders=':a; p; n; /^\s*$/q; ba;'
+  declare sedextractbody='/^\s*$/{ :a; n; p; ba; }'
+  declare sedextractstatus='/^HTTP\/[0-9]\.[0-9] ([0-9]{3}) (.*)$/s//\1 \2/p'
+
   if [[ $exitcode == 0 ]]
   then
     declare requestfile="$reqdir/request.http"
     declare responsefile="$reqdir/response.http"
-    sed -n ':a; p; n; /^HTTP/q; ba;' <"$rawfile" >"$requestfile"
-    sed -n '/^HTTP/{ p; :a; n; p; ba; }' <"$rawfile" >"$responsefile"
+    sed -n "$sedextractrequest" <"$rawfile" >"$requestfile"
+    sed -n "$sedextractresponse" <"$rawfile" >"$responsefile"
 
     declare requestheadersfile="$reqdir/request.headers.http"
     declare requestbodyfile="$reqdir/request.sent.body.http"
-    sed -n ':a; p; n; /^\s*$/q; ba;' <"$requestfile" >"$requestheadersfile"
-    sed -n '/^\s*$/{ :a; n; p; ba; }' <"$requestfile" >"$requestbodyfile"
+    sed -n "$sedextractheaders" <"$requestfile" >"$requestheadersfile"
+    sed -n "$sedextractbody" <"$requestfile" >"$requestbodyfile"
 
     declare responsestatusfile="$reqdir/response.status.http"
     declare responseheadersfile="$reqdir/response.headers.http"
     declare responsebodyfile="$reqdir/response.body.http"
-    sed -n -E '/^HTTP\/[0-9]\.[0-9] ([0-9]{3}) (.*)$/s//\1 \2/p' <"$responsefile" >"$responsestatusfile"
-    sed -n ':a; p; n; /^\s*$/q; ba;' <"$responsefile" >"$responseheadersfile"
-    sed -n '/^\s*$/{ :a; n; p; ba; }' <"$responsefile" >"$responsebodyfile"
+    sed -n -E "$sedextractstatus" <"$responsefile" >"$responsestatusfile"
+    sed -n "$sedextractheaders" <"$responsefile" >"$responseheadersfile"
+    sed -n "$sedextractbody" <"$responsefile" >"$responsebodyfile"
   else
     cat "$errorfile"
   fi
