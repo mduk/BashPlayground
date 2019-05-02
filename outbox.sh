@@ -216,10 +216,10 @@ _test_outbox_longlines() {
   outbox begin TWO
   outbox begin THREE
   outbox begin FOUR
-  outbox println "$(ifconfig)"
+  outbox println "$(ip address)"
   outbox end
   outbox begin FOUR
-  (IFS=$'\n'; outbox println $(ifconfig))
+  (IFS=$'\n'; outbox println $(ip address))
   outbox end
   outbox end
   outbox end
