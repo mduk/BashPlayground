@@ -229,6 +229,11 @@ HTTP() {
 
   source ./advanced-argument-parser.sh
 
+  # Method and URL can be specified using the method:
+  # and url: parameters. Alternatively, for shorthand
+  # the method and URL can be provided as a pair.
+  # Eg: POST: http://localhost/foo
+  #     GET: https://google.com
   if [[ -z $param_method ]] && [[ -z $param_url ]]
   then
     for method in GET POST PUT DELETE HEAD OPTIONS
