@@ -112,8 +112,39 @@ HTTP() {
             ;;
 
           body)
-            cat "$reqdir/request.sent.body.http"
-            return
+            declare body_file="$reqdir/request.sent.body.http"
+            case "$3" in
+
+              file)
+                echo "$body_file"
+                return
+                ;;
+
+              property)
+                declare content_type="$(HTTP "$1" header Content-Type)"
+                case "$content_type" in
+                  application/json|*+json)
+                    if [[ -z "$4" ]]
+                    then
+                      err 'HTTP: You must specify a JQ selector!'
+                      return 1
+                    fi
+                    jq -rcM "$4" "$body_file"
+                    return
+                    ;;
+
+                  *)
+                    err "HTTP: Sorry, I don't know how to interpret a [Content-Type: $content_type] payload!"
+                    ;;
+                esac
+                ;;
+
+              '')
+                cat "$body_file"
+                return
+                ;;
+
+            esac
             ;;
 
           '')
@@ -181,7 +212,7 @@ HTTP() {
                     ;;
 
                   *)
-                    err "HTTP: Sorry, I don't know how to interpret a [Content-Type: $content_type] response!"
+                    err "HTTP: Sorry, I don't know how to interpret a [Content-Type: $content_type] payload!"
                     return 2
 
                 esac
