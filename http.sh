@@ -1,7 +1,9 @@
 declare debug=${HTTP_DEBUG:-false}
 
+source ./debug.sh
 source ./var-dump.sh
 source ./array-assoc-utils.sh
+source ./compare.sh
 
 ########################################################################
 # Initialise associative arrays that don't already exist
@@ -52,6 +54,13 @@ HTTP_urlencode() {
   done | sed 's/&$//' # strip off trailing ampersand
 }
 
+HTTP_parse_header() {
+  declare file="$1"
+  declare header="$2"
+
+  sed -E -n "/^${header}: (.+)\r/s//\1/p" "${file}" # Don't forget the \r!
+}
+
 ########################################################################
 # HTTP function implementation
 ########################################################################
@@ -93,6 +102,8 @@ HTTP() {
           declare reqdir="$HTTP_LAST_REQDIR"
         fi
 
+        declare request_file="${reqdir}/request.http"
+
         case "$2" in
 
           headers)
@@ -106,7 +117,7 @@ HTTP() {
               err 'No header specified!'
               return 1
             fi
-            sed -E -n "/^$3: (.+)\r/s//\1/p" "$reqdir/request.headers.http" # Don't forget the \r!
+            HTTP_parse_header "$request_file" "$3"
             shift
             return
             ;;
@@ -121,7 +132,7 @@ HTTP() {
                 ;;
 
               property)
-                declare content_type="$(HTTP "$1" header Content-Type)"
+                declare content_type="$(HTTP_parse_header "$request_file" 'Content-Type')"
                 case "$content_type" in
                   application/json|*+json)
                     if [[ -z "$4" ]]
