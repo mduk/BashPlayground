@@ -255,6 +255,12 @@ HTTP() {
   declare param_POST_rules=':url'
   declare param_DELETE=''
   declare param_DELETE_rules=':url'
+  declare param_PATCH=''
+  declare param_PATCH_rules=':url'
+  declare param_HEAD=''
+  declare param_HEAD_rules=':url'
+  declare param_OPTIONS=''
+  declare param_OPTIONS_rules=':url'
 
   declare param_alias=''
   declare param_alias_rules=':no-spaces'
@@ -266,7 +272,7 @@ HTTP() {
   declare param_verify_rules=':yes-no'
 
   declare param_method=""
-  declare param_method_rules='/^(HEAD|OPTIONS|GET|POST|PUT|DELETE)$'
+  declare param_method_rules='/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)$'
 
   declare param_url=""
   declare param_url_rules=':url'
@@ -287,7 +293,7 @@ HTTP() {
   #     GET: https://google.com
   if [[ -z $param_method ]] && [[ -z $param_url ]]
   then
-    for method in GET POST PUT DELETE HEAD OPTIONS
+    for method in GET POST PUT DELETE PATCH HEAD OPTIONS
     do
       declare -n param="param_$method"
       if [[ -n $param ]]
