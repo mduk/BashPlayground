@@ -1,0 +1,55 @@
+#!/bin/bash
+
+if [[ -z $IMAP_USER ]]
+then
+  echo "Missing environment variable: IMAP_USER"
+  exit 1
+fi
+
+if [[ -z $IMAP_PASS ]]
+then
+  echo "Missing environment variable: IMAP_PASS"
+  exit 1
+fi
+
+IMAP_HOST='imappro.zoho.com'
+IMAP_PORT=993
+
+echo "Searching..."
+
+declare openssl="openssl s_client -connect ${IMAP_HOST}:${IMAP_PORT} -crlf -ign_eof -quiet"
+
+declare message_ids="$(
+cat <<-EOF | $openssl |& sed -n '/^\* SEARCH /{ s///; s/\r//; p; }'
+. LOGIN ${IMAP_USER} ${IMAP_PASS}
+. SELECT INBOX
+. SEARCH HEADER Subject "${SEARCH_SUBJECT:-Remittance Delivery}"
+. LOGOUT
+EOF
+)"
+
+declare count="$(wc -w <<<"$message_ids")"
+
+echo "Found $count messages."
+echo "$message_ids"
+
+for id in $message_ids
+do
+  echo "Downloading ${id}"
+  declare imapfile="./${id}.imap"
+
+  cat <<-EOF | $openssl |& sed '/^\* /d; /^\. /d' >"$imapfile"
+		. LOGIN ${IMAP_USER} ${IMAP_PASS}
+		. SELECT INBOX
+		. FETCH ${id} (INTERNALDATE BODY[])
+		. LOGOUT
+	EOF
+
+  declare boundary="$(sed -n '/\s\+boundary=/s///p' "$imapfile")"
+
+  sed -n "0,/^\s\*$/p" "$imapfile" #> "${id}.headers.mime"
+
+
+
+
+done

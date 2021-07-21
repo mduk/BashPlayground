@@ -1,0 +1,9 @@
+#!/bin/bash
+
+ffmpeg -y \
+  -f v4l2 -video_size 1920x1080 -input_format mjpeg -i /dev/video1 \
+  -codec:v libx264 -crf 18 -preset slow \
+  -codec:a aac \
+  -threads 4 \
+  -filter:v 'scale=720:-1' \
+  /tmp/$(date +"%Y-%m-%d_%H:%M").mkv

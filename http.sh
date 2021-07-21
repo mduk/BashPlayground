@@ -54,11 +54,19 @@ HTTP_urlencode() {
   done | sed 's/&$//' # strip off trailing ampersand
 }
 
-HTTP_parse_header() {
-  declare file="$1"
-  declare header="$2"
+HTTP_base64() {
+  declare cmd="$1"
 
-  sed -E -n "/^${header}: (.+)\r/s//\1/p" "${file}" # Don't forget the \r!
+  if [[ "$2" == 'websafe' ]]
+  then cmd+='-websafe'
+  fi
+
+  case "$cmd" in
+    encode)         xxd -r -p | base64 ;;
+    encode-websafe) xxd -r -p | base64 | sed 's/+/-/g; s|/|_|g; s/=//g' ;;
+    decode)         ;;
+    decode-websafe) ;;
+  esac
 }
 
 ########################################################################

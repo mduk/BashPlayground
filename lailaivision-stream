@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# --sout '#transcode{vcodec=mjpg,width=1280,height=720,vb=32000}:standard{access=http,mux=ts,dst=:8080}'
+
+cvlc \
+  'v4l2:///dev/video1:width=1920:height=1080' \
+  --sout '#transcode{vcodec=mjpg,width=1280,height=720,vb=64000}:standard{access=http,mux=ts,dst=:8080}'
